@@ -1,0 +1,345 @@
+Domain Checkpoint {
+Subdomain Principal
+}
+
+BoundedContext Principal implements Principal {
+    Aggregate User {
+        Entity User {
+            aggregateRoot
+            -UserId id
+            String nome
+            String _email
+            String senha
+            String avatarUrl nullable
+            String bio nullable
+            Boolean isPrivate
+            Boolean emailVerificado
+            -DiarioId diarioId nullable
+
+            -List<UserId> solicitacoesPendentes
+            -List<RedeSocial> redesSociais
+            -List<UserId> seguindo
+            -List<UserId> seguidores
+            -List<ListaId> listas
+            -List<JogoId> jogosFavoritos
+
+            Repository UserRepository {
+                void saveUser(@User user);
+                @User createUser(String _email, String senha, String nome);
+                @User getUser(@UserId id);
+                @User getByEmail(String _email);
+            }
+        }
+
+        ValueObject UserId { String id }
+
+        ValueObject RedeSocial {
+            String plataforma
+            String username
+        }
+
+        Service UserServico {
+            // Cadastro e autenticação
+			String login(String _email, String senha);
+            String registerUser(String _email, String senha, String nome);
+            void verifyEmail(@Token token);
+
+            // Perfil
+            void updateProfile(@User user, String nome, String bio, List<@RedeSocial> redesSociais);
+            void updateAvatar(@User user, String avatarUrl);
+            void togglePrivacicade(@User user, Boolean isPrivate);
+
+            // Seguidores
+            void toggleSeguir(@User seguidor, @User userAlvo);
+            void approveSeguidor(@User dono, @User solicitante);
+            void rejectSeguidor(@User dono, @User solicitante);
+
+			// informações
+			@User getInformacoes(@User solicitante, @User solicitado);
+
+            // Favoritos no perfil
+            void addJogoFavorito(@User user, @Jogo jogo);
+            void removeJogoFavorito(@User user, @Jogo jogo);
+            void reorderJogoFavorito(@User user, List<@JogoId> novaOrdem);
+
+            // Validações
+            Boolean isEmailAlreadyInUse(String _email);
+        }
+    }
+
+	Aggregate Lista {
+	
+	    Entity ListaJogos {
+	        aggregateRoot
+	        -ListaId id
+	        -UserId donoId
+	        String titulo
+	        Boolean isPrivate
+	
+	        -List<JogoId> jogos
+	        -List<UserId> curtidas
+	
+	        Repository ListaJogosRepository {
+	            void saveList(@ListaJogos lista);
+	            @ListaJogos createList(@UserId donoId, String titulo, boolean isPrivate);
+	            @ListaJogos getList(@ListaId id);
+	            @ListaJogos getListByTituloAndDono(String titulo, @UserId donoId);
+	        }
+	    }
+	
+	    ValueObject ListaId { String id }
+	
+	    Service ListaServico {
+	
+	        // Criação e duplicação
+	        void createLista(@User dono, String titulo, Boolean isPrivate);
+	        void duplicateLista(@User novoDono, @ListaId listaOrigemId, @UserId donoOrigem);
+	
+	        // Atualização
+	        void updateTitulo(@User user, @ListaId listaId, String novoTitulo);
+	        void updateJogos(@User user, @ListaId listaId, List<@JogoId> novosJogos);
+	        void togglePrivacidade(@User user, @ListaId listaId);
+	
+	        // Curtidas
+	        void toggleListaLike(@User user, @ListaId listaId);
+	    }
+	}
+
+	Aggregate Diario {
+	
+	    Entity Diario {
+	        aggregateRoot
+	        -DiarioId id
+	        -UserId donoId
+	
+	        -List<RegistroId> registros
+	
+	        Repository DiarioRepository {
+	            void saveDiario(@Diario diario);
+	            @Diario getDiario(@DiarioId id);
+	            @Diario getDiarioByDono(@User user);
+
+				@RegistroDiario createRegistroDiario(@JogoId jogo, Date dataInicio, Date dataTermino);
+				@RegistroDiario getRegistroDiario(@RegistroId registroId);
+				void saveRegistroDiario(@RegistroDiario registroDiario);
+
+				@Conquista createConquista(String nome, Date dataDesbloqueada, boolean isUnloked);
+				@Conquista getConquista(@ConquistaId conquistaId);
+				void saveConquista(@Conquista conquista);
+	        }
+	    }
+	
+	    ValueObject DiarioId   { String id }
+	    ValueObject RegistroId { String id }
+	    ValueObject ConquistaId { String id }
+	
+	    Entity RegistroDiario {
+	        -RegistroId id
+	        -JogoId jogoId
+	        Date dataInicio
+	        Date dataTermino nullable
+	
+	        -List<ConquistaId> conquistas
+	    }
+	
+	    Entity Conquista {
+	        -ConquistaId id
+	        String nome
+	        Date dataDesbloqueada
+	        Boolean concluida
+	    }
+	
+	    Service DiarioServico {
+	
+	        // Registros de jogos
+	        void addRegistro(@Diario diario, @JogoId jogoId, Date dataInicio, Date dataTermino);
+	        void updateRegistro(@RegistroId registroId, Date novaDataInicio, Date novaDataTermino);
+	        void removeRegistro(@User user, @RegistroId registroId);
+	
+	        // Conquistas
+	        void addConquista(@RegistroId registroId, String nome, Date dataDesbloqueada, boolean concluida);
+	        void updateConquista(@ConquistaId conquistaId, String novoNome, Date novaDataDesbloqueada, Boolean isPrivate);
+	        Double getPercentualConquistas(@RegistroId registroId);
+	    }
+	}
+
+
+	Aggregate Jogo {
+	
+	    Entity Jogo {
+	        aggregateRoot
+	        -JogoId id
+	        String nome
+	        String company
+	        String capaUrl
+			String informacaoTitulo
+			String informacaoDescricao
+	        Double nota
+	
+	        -List<CapturaDeTelaUrl> capturas
+	        -List<UserId> curtidas
+	        -List<TagId> tags
+	        -List<RequisitosDeSistemaId> requisitos
+	        -List<AvaliacaoId> avaliacoes
+	
+	        Repository JogoRepository {
+	            void saveJogo(@Jogo jogo);
+				@Jogo getJogo(@JogoId id);
+				List<@Jogo> listJogos();
+
+				@Avaliacao getAvaliacaoById(@AvaliacaoId id);
+				void saveAvaliacao(@Avaliacao avaliacao);
+				@Avaliacao createAvaliacao(@UserId autorId, @JogoId jogoId, Double nota, String comentario);
+				List<@Avaliacao> getAvaliacoesByJogoId(@JogoId jogoId);
+
+
+				@Tag createTag(String nome);
+				@Tag getTagByName(String nome);
+				@Tag getTagById(@TagId tagId);
+				void saveTag(@Tag tag); // <— ADICIONE ISTO
+
+				@RequisitosDeSistema getRequisitosDeSistemaByJogoId(@JogoId jogoId);
+	        }
+	    }
+	
+	    ValueObject JogoId { String id }
+	
+	    // ---- Avaliações ----
+	    Entity Avaliacao {
+	        -AvaliacaoId id
+	        -UserId autorId
+	        -JogoId jogoId
+	        Double nota
+	        String comentario nullable
+	        Date data
+	
+	        -List<UserId> curtidas
+	    }
+	    ValueObject AvaliacaoId { String id }
+	
+	    // ---- Tags ----
+	    Entity Tag {
+	        -TagId id
+	        String nome
+
+	        -List<UserId> votos
+	    }
+	    ValueObject TagId { String id }
+	
+	    // ---- Requisitos de sistema ----
+	    Entity RequisitosDeSistema {
+	        -RequisitosDeSistemaId id
+	        String sistemaOp
+	        String processador
+	        String memoria
+	        String placaVideo
+	        String tipo
+	    }
+	    ValueObject RequisitosDeSistemaId { String id }
+	
+	    // ---- Capturas ----
+	    ValueObject CapturaDeTelaUrl { String _url }
+	
+	    Service JogoServico {
+			// Informações
+			@Jogo getJogo(@JogoId jogoId);
+			List<@Jogo> listJogos();
+			@RequisitosDeSistema getRequisitosDeSistema(@JogoId jogoId);
+
+	        // Avaliações
+	        void submitAvaliacao(@User autor, @JogoId jogoId, Double nota, String critica);
+	        void editAvaliacao(@AvaliacaoId avaliacaoId, Double novaNota, String novaCritica);
+	        void toggleAvaliacaoLike(@User user, @AvaliacaoId avaliacaoId);
+	
+	        // Tags
+	        void addTagsToGame(@JogoId jogoId, @UserId userId, List<String> tags);
+	        void removeTagFromGame(@JogoId jogoId, String tagNome, @UserId userId);
+	        List<@Tag> getTopTags(@JogoId jogoId);
+	
+	        // Curtidas no jogo
+	        void toggleGameLike(@User user, @JogoId jogoId);
+	    }
+	}
+
+
+	Aggregate Comentario {
+	
+	    Entity Comentario {
+	        aggregateRoot
+	        -ComentarioId id
+	        -UserId autorId
+	        String conteudo
+	        Date data
+	
+	        -AvaliacaoId avaliacaoAlvo nullable
+	        -ListaId listaAlvo nullable
+	
+	        -ComentarioId comentarioPai nullable
+	
+	        Repository ComentarioRepository {
+	            void saveComentario(@Comentario comentario);
+	            @Comentario getComentarioById(@ComentarioId id);
+	            List<@Comentario> getRespostasByPai(@ComentarioId idPai);
+	            List<@Comentario> listComentariosRaizByAvaliacaoAlvo(@AvaliacaoId avaliacaoId);
+	            List<@Comentario> listComentariosRaizByListaAlvo(@ListaId listaId);
+				void deleteComentario(@ComentarioId comentarioId);
+	        }
+	    }
+	
+	    ValueObject ComentarioId { String id }
+	
+	    Service ComentarioServico {
+	        // Criação (comentários raiz)
+	        void addComentarioAvaliacaoRaiz(@User autor, @AvaliacaoId avaliacaoId, String conteudo);
+	        void addComentarioListaRaiz(@User autor, @ListaId listaId, String conteudo);
+	
+	        // Resposta (thread)
+	        void replyComentario(@User autor, @ComentarioId comentarioPaiId, String conteudo);
+
+			// Listagem
+			List<@Comentario> listComentariosByAvaliacaoAlvo(@AvaliacaoId avaliacaoAlvoId);
+			List<@Comentario> listComentariosByListaAlvo(@ListaId listaAlvoId);
+			List<@Comentario> listComentariosByPai(@ComentarioId comentarioPaiId);
+
+			// Curtidas
+			void toggleComentarioLike(@User user, @ComentarioId comentarioId);
+	
+	        // Edição e remoção
+	        void editComentario(@User autor, @ComentarioId comentarioId, String novoConteudo);
+	        void deleteComentario(@User autor, @ComentarioId comentarioId);
+	    }
+	}
+
+
+	Aggregate Email {
+	
+	    Entity VerificacaoEmail {
+	        aggregateRoot
+	        -Token token
+	        -UserId userId
+	        Date dataExpiracao
+	
+	        Repository VerificacaoEmailRepository {
+	            void save(@VerificacaoEmail verificacaoEmail);
+				@VerificacaoEmail getByToken(@Token token);
+				void deleteToken(@Token token);
+				@VerificacaoEmail createToken(@Token token, @UserId id);
+				@VerificacaoEmail getByUserId(@UserId id);
+	        }
+	    }
+	
+	    ValueObject Token { String token }
+	
+	    Service EmailServico {
+	        void sendEmail(String destinatario, String assunto, String corpo);
+	        void generateVerificationToken(String _email, @UserId userId);
+	        void sendVerificationEmail(@User user, @Token token);
+	        void getVerificacaoEmailByToken(@Token token);
+	    }
+	}
+}
+
+
+ContextMap CheckpointMap {
+	contains Principal
+}
