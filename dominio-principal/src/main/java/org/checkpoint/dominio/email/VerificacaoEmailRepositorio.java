@@ -9,7 +9,7 @@ public interface VerificacaoEmailRepositorio {
 
     void deleteToken(Token token);
 
-    VerificacaoEmail create(Token token, UserId id);
+    VerificacaoEmail createToken(Token token, UserId id);
 
     VerificacaoEmail getByUserId(UserId id);
 }

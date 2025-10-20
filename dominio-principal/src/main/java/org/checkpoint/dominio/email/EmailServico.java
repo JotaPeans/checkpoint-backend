@@ -33,7 +33,7 @@ public class EmailServico implements EmailSenderService {
             }
 
             Token token = new Token(hexString.toString());
-            this.verificacaoEmailRepositorio.create(token, userId);
+            this.verificacaoEmailRepositorio.createToken(token, userId);
 
             return token.getToken();
         } catch (NoSuchAlgorithmException e) {
