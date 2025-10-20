@@ -156,6 +156,165 @@ public class UserServico {
         this.userRepositorio.saveUser(user);
     }
 
+        public void updateProfile(User user, String nome, String bio, List<RedeSocial> redesSociais) {
+        notNull(user, "O usuário não pode ser nulo");
+        notNull(nome, "O nome não pode ser nulo");
+        notNull(redesSociais, "A lista de redes sociais não pode ser nula");
+
+        user.setNome(nome);
+        user.setBio(bio);
+        user.setRedesSociais(redesSociais);
+        this.userRepositorio.saveUser(user);
+    }
+
+    public void updateAvatar(User user, String avatarUrl) {
+        notNull(user, "O usuário não pode ser nulo");
+        notNull(avatarUrl, "A URL do avatar não pode ser nula");
+
+        user.setAvatarUrl(avatarUrl);
+        this.userRepositorio.saveUser(user);
+    }
+
+    public void togglePrivacidade(User user, Boolean isPrivate) {
+        notNull(user, "O usuário não pode ser nulo");
+        notNull(isPrivate, "O parâmetro 'isPrivate' não pode ser nulo");
+
+        user.setIsPrivate(isPrivate);
+        this.userRepositorio.saveUser(user);
+    }
+
+    // =====================
+    // Seguidores
+    // =====================
+    public void toggleSeguir(User seguidor, User userAlvo) {
+        notNull(seguidor, "O seguidor não pode ser nulo");
+        notNull(userAlvo, "O usuário alvo não pode ser nulo");
+
+        if (userAlvo.getIsPrivate()) {
+            // Usuário é privado -> cria solicitação pendente
+            List<UserId> solicitacoesPendentes = userAlvo.getSolicitacoesPendentes();
+
+            if (solicitacoesPendentes.contains(seguidor.getUserId()) == false) {
+                solicitacoesPendentes.add(seguidor.getUserId());
+                userAlvo.setSolicitacoesPendentes(solicitacoesPendentes);
+            }
+        } else {
+            // Usuário é público -> segue diretamente
+            List<UserId> userAlvoSeguidores = userAlvo.getSeguidores();
+            List<UserId> userSeguidorSeguindo = userAlvo.getSeguindo();
+
+            if (userAlvoSeguidores.contains(seguidor.getUserId()) == false) {
+                userAlvoSeguidores.add(seguidor.getUserId());
+                userAlvo.setSeguidores(userAlvoSeguidores);
+
+
+                userSeguidorSeguindo.add(userAlvo.getUserId());
+                seguidor.setSeguindo(userSeguidorSeguindo);
+            } else {
+                // Já segue-> desfaz
+                userAlvoSeguidores.remove(seguidor.getUserId());
+                userAlvo.setSeguidores(userAlvoSeguidores);
+
+                seguidor.getSeguindo().remove(userAlvo.getUserId());
+                seguidor.setSeguindo(userSeguidorSeguindo);
+            }
+        }
+
+        userRepositorio.saveUser(seguidor);
+        userRepositorio.saveUser(userAlvo);
+    }
+
+    public void approveSeguidor(User dono, User solicitante) {
+        notNull(dono, "O dono não pode ser nulo");
+        notNull(solicitante, "O solicitante não pode ser nulo");
+
+        List<UserId> solicitacoesPendentes = dono.getSolicitacoesPendentes();
+
+        boolean temSolicitacaoPendente = solicitacoesPendentes.contains(solicitante.getUserId());
+
+        isTrue(temSolicitacaoPendente, "Nenhuma solicitação pendente encontrada.");
+
+        solicitacoesPendentes.remove(solicitante.getUserId());
+        dono.setSolicitacoesPendentes(solicitacoesPendentes);
+
+        dono.getSeguidores().add(solicitante.getUserId());
+
+        List<UserId> pessoasSeguindoSolicitante = solicitante.getSeguindo();
+        pessoasSeguindoSolicitante.add(dono.getUserId());
+        solicitante.setSeguindo(pessoasSeguindoSolicitante);
+
+        userRepositorio.saveUser(dono);
+        userRepositorio.saveUser(solicitante);
+    }
+
+    public void rejectSeguidor(User dono, User solicitante) {
+        notNull(dono, "O dono não pode ser nulo");
+        notNull(solicitante, "O solicitante não pode ser nulo");
+
+        List<UserId> solicitacoesPendentes = dono.getSolicitacoesPendentes();
+
+        boolean temSolicitacaoPendente = solicitacoesPendentes.contains(solicitante.getUserId());
+
+        isTrue(temSolicitacaoPendente, "Nenhuma solicitação pendente encontrada.");
+
+        solicitacoesPendentes.remove(solicitante.getUserId());
+
+        userRepositorio.saveUser(dono);
+    }
+
+    public String getInformacoes(User solicitante, User solicitado) {
+        notNull(solicitante, "O solicitante não pode ser nulo");
+        notNull(solicitado, "O usuário solicitado não pode ser nulo");
+
+        if (!solicitado.getIsPrivate()) {
+            return montarInformacoes(solicitado);
+        }
+
+        if (solicitante.getUserId().equals(solicitado.getUserId())) {
+            return montarInformacoes(solicitado);
+        }
+
+        if (solicitado.getSeguidores() != null && solicitado.getSeguidores().contains(solicitante.getUserId())) {
+            return montarInformacoes(solicitado);
+        }
+
+        return "Você não é seguidor desta pessoa.";
+    }
+
+    private String montarInformacoes(User u) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Nome: ").append(u.getNome()).append("\n");
+
+        if (u.getEmail() != null)
+            sb.append("Email: ").append(u.getEmail()).append("\n");
+
+        if (u.getBio() != null)
+            sb.append("Bio: ").append(u.getBio()).append("\n");
+
+        sb.append("Privado: ").append(u.getIsPrivate() ? "Sim" : "Não").append("\n");
+
+        if (u.getDiarioId() != null)
+            sb.append("Diário: ").append(u.getDiarioId().toString()).append("\n");
+
+        if (u.getRedesSociais() != null && !u.getRedesSociais().isEmpty())
+            sb.append("Redes Sociais: ").append(u.getRedesSociais()).append("\n");
+
+        if (u.getSeguindo() != null)
+            sb.append("Seguindo: ").append(u.getSeguindo().size()).append("\n");
+
+        if (u.getSeguidores() != null)
+            sb.append("Seguidores: ").append(u.getSeguidores().size()).append("\n");
+
+        if (u.getListas() != null && !u.getListas().isEmpty())
+            sb.append("Listas: ").append(u.getListas()).append("\n");
+
+        if (u.getJogosFavoritos() != null && !u.getJogosFavoritos().isEmpty())
+            sb.append("Jogos favoritos: ").append(u.getJogosFavoritos()).append("\n");
+
+        return sb.toString();
+    }
+
+
 
     // =====================
     // Validações
