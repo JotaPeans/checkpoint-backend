@@ -17,7 +17,7 @@ public class EmailServico implements EmailSenderService {
     }
 
     public void sendEmail(String recipient, String subject, String body) {
-
+        System.out.println("Email enviado");
     }
 
     public String generateVerificationToken(String email, UserId userId) {
@@ -42,7 +42,7 @@ public class EmailServico implements EmailSenderService {
     }
 
     public void sendVerificationEmail(String email, String token) {
-
+        System.out.println("Email de verificacao enviado");
     }
 
     public VerificacaoEmail getVerificacaoEmailByToken (Token token) {
