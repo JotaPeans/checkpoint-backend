@@ -232,4 +232,47 @@ public class JogoServico {
                 .limit(5)
                 .toList();
     }
+
+    public void toggleAvaliacaoLike(User user, AvaliacaoId avaliacaoId) {
+        notNull(user, "O usuário não pode ser nulo");
+        notNull(avaliacaoId, "O id da avaliação não pode ser nulo");
+
+        Avaliacao avaliacao = this.jogoRepositorio.getAvaliacaoById(avaliacaoId);
+
+        notNull(avaliacao, "Avaliação não encontrada");
+
+        List<UserId> avaliacaoCurtidas = avaliacao.getCurtidas();
+
+        if (avaliacaoCurtidas.contains(user.getUserId())) {
+            avaliacaoCurtidas.remove((user.getUserId()));
+        } else {
+            avaliacaoCurtidas.add(user.getUserId());
+        }
+
+        avaliacao.setCurtidas(avaliacaoCurtidas);
+
+        this.jogoRepositorio.saveAvaliacao(avaliacao);
+    }
+
+    public void toggleGameLike(User user, JogoId jogoId) {
+        notNull(user, "O usuário não pode ser nulo");
+        notNull(jogoId, "O id do jogo não pode ser nulo");
+
+        Jogo jogo = this.jogoRepositorio.getJogo(jogoId);
+
+        notNull(jogo, "Jogo não encontrado");
+
+        List<UserId> jogoCurtidas = jogo.getCurtidas();
+
+        if (jogoCurtidas.contains(user.getUserId())) {
+            jogoCurtidas.remove(user.getUserId());
+        } else {
+            jogoCurtidas.add(user.getUserId());
+        }
+
+        jogo.setCurtidas(jogoCurtidas);
+
+        this.jogoRepositorio.saveJogo(jogo);
+    }
+
 }

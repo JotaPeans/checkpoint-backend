@@ -3,11 +3,15 @@ package org.checkpoint.dominio.user;
 import org.checkpoint.dominio.email.EmailSenderService;
 import org.checkpoint.dominio.email.Token;
 import org.checkpoint.dominio.email.VerificacaoEmail;
+import org.checkpoint.dominio.jogo.Jogo;
+import org.checkpoint.dominio.jogo.JogoId;
 
 import static org.apache.commons.lang3.Validate.notNull;
 import static org.apache.commons.lang3.Validate.isTrue;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class UserServico {
@@ -93,6 +97,66 @@ public class UserServico {
         this.userRepositorio.saveUser(user);
     }
 
+    public void addJogoFavorito(User user, Jogo jogo) {
+        notNull(user, "O usuário não pode ser nulo");
+        notNull(jogo, "O jogo não pode ser nulo");
+
+        List<JogoId> jogosFavoritos = user.getJogosFavoritos();
+
+        if (jogosFavoritos == null) {
+            jogosFavoritos = new ArrayList<>();
+        }
+
+        if (jogosFavoritos.contains(jogo.getId())) {
+            throw new IllegalArgumentException("O jogo já está entre os favoritos");
+        }
+
+        if (jogosFavoritos.size() >= 4) {
+            throw new IllegalArgumentException("O limite de jogos favoritos é 4");
+        }
+
+
+        jogosFavoritos.add(jogo.getId());
+
+        user.setJogosFavoritos(jogosFavoritos);
+        this.userRepositorio.saveUser(user);
+    }
+
+
+    public void removeJogoFavorito(User user, Jogo jogo) {
+        notNull(user, "O usuário não pode ser nulo");
+        notNull(jogo, "O jogo não pode ser nulo");
+
+        List<JogoId> jogosFavoritos = user.getJogosFavoritos();
+        jogosFavoritos.remove(jogo.getId());
+
+        user.setJogosFavoritos(jogosFavoritos);
+        this.userRepositorio.saveUser(user);
+    }
+
+    public void reorderJogoFavorito(User user, List<JogoId> novaOrdem) {
+        notNull(user, "O usuário não pode ser nulo");
+        notNull(novaOrdem, "A nova ordem não pode ser nula");
+
+        List<JogoId> favoritosAtuais = user.getJogosFavoritos();
+
+        if (favoritosAtuais == null || favoritosAtuais.isEmpty()) {
+            throw new IllegalArgumentException("O usuário não possui jogos favoritos para reordenar");
+        }
+
+        if (favoritosAtuais.size() != novaOrdem.size()) {
+            throw new IllegalArgumentException("A nova ordem deve conter todos os jogos favoritos atuais");
+        }
+
+        if (!favoritosAtuais.containsAll(novaOrdem) || !novaOrdem.containsAll(favoritosAtuais)) {
+            throw new IllegalArgumentException("A nova ordem deve conter exatamente os mesmos jogos favoritos");
+        }
+
+        user.setJogosFavoritos(new ArrayList<>(novaOrdem));
+        this.userRepositorio.saveUser(user);
+    }
+
+
     // =====================
     // Validações
     // =====================
@@ -102,4 +166,6 @@ public class UserServico {
         User user = this.userRepositorio.getByEmail(email);
         return user != null;
     }
+
+
 }
