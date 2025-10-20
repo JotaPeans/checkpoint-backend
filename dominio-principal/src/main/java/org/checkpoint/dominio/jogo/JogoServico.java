@@ -203,11 +203,11 @@ public class JogoServico {
         }
 
         if (tag.getTotalVotos() == 0) {
+            tagsDoJogo.remove(tag.getId());
             jogo.setTags(tagsDoJogo);
             this.jogoRepositorio.saveJogo(jogo);
         }
     }
-     tagsDoJogo.remove(tag.getId());
 
     public List<Tag> getTopTags(JogoId jogoId) {
         notNull(jogoId, "O id do jogo não pode ser nulo");
