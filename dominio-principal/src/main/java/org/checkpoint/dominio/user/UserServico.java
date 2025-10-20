@@ -36,7 +36,7 @@ public class UserServico {
 
         isTrue(user.isEmailVerificado(), "A conta não foi verificada");
 
-        return "O usuario logou no sistema";
+        return "token jwt";
     }
 
     public String registerUser(String email, String senha, String nome) {
