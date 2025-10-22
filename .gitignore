@@ -19,7 +19,6 @@ target/
 .factorypath
 .project
 .settings
-.springBeans
 .sts4-cache
 
 ### NetBeans ###
