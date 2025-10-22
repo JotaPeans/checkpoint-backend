@@ -18,6 +18,9 @@ O **CheckPoint** tem como objetivo fornecer uma plataforma para que os usuários
 
 ## Links:
 Lo-fi: https://www.figma.com/design/or1078JrxwtuCJtsCdBJL8/Untitled?node-id=0-1&t=RDqwF0ybdT7fNjob-1
+
 Descrição Onipresente: https://docs.google.com/document/d/15g4gLoQL2DzEMKV60VfiVbXVEGK9qFGaOY5B0pKeNuQ/edit?usp=sharing
+
 Mapa da Jornada do Usuário: https://www.figma.com/board/c6SUCNawoxS44CE2699skJ/Sem-t%C3%ADtulo?node-id=0-1&p=f&t=TYIoZyMhIaEtnPdh-0
+
 Apresentação: https://www.canva.com/design/DAG2Uw5oaCs/OpcpvDQ7PuL4eKPtbChGAQ/edit
